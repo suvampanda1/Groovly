@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SplitText, BlurRise, SpotlightCard, ShinyText } from "./components/reactbits";
+import { AuthPage, type AccountRole, type AuthMode } from "./components/account/AuthPage";
+import { TeacherCommerceHub } from "./components/account/TeacherCommerceHub";
+import { CheckoutPreview, type CheckoutItem, type CheckoutStatus } from "./components/account/CheckoutPreview";
 import {
   Play, Radio, Users, Clock, ChevronRight, X, Send, Sparkles, Star,
   TrendingUp, Zap, Music, Search, Home, Video, BookOpen, User,
@@ -12,7 +15,6 @@ import {
 
 type Currency = "INR" | "USD";
 type Tab = "home" | "learn" | "earn" | "book";
-type Role = "student" | "teacher";
 interface Msg { role: "user" | "ai"; text: string; ts: string; }
 
 const NEON = "#00FFB2";
@@ -29,11 +31,12 @@ const promos = [
 ];
 
 const lives = [
-  { id: 1, title: "Breaking Basics", instructor: "DJ Kross", viewers: 342, genre: "Hip-Hop", level: "Beginner", ago: "12 min", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 2, title: "Salsa Caliente", instructor: "Maria Cruz", viewers: 187, genre: "Latin", level: "Intermediate", ago: "5 min", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 3, title: "Popping & Locking", instructor: "Urban Flex", viewers: 529, genre: "Street", level: "All Levels", ago: "28 min", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 4, title: "Kathak Fusion", instructor: "Divya Sharma", viewers: 211, genre: "Classical", level: "Intermediate", ago: "2 min", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 5, title: "Waacking Session", instructor: "Princess K", viewers: 94, genre: "Vogue", level: "Advanced", ago: "41 min", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 1, title: "Breaking Basics", instructor: "DJ Kross", viewers: 342, genre: "Hip-Hop", level: "Beginner", ago: "12 min", priceINR: 499, priceUSD: 6, image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 2, title: "Salsa Caliente", instructor: "Maria Cruz", viewers: 187, genre: "Latin", level: "Intermediate", ago: "5 min", priceINR: 699, priceUSD: 9, image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 3, title: "Popping & Locking", instructor: "Urban Flex", viewers: 529, genre: "Street", level: "All Levels", ago: "28 min", priceINR: 599, priceUSD: 7, image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 4, title: "Kathak Fusion", instructor: "Divya Sharma", viewers: 211, genre: "Classical", level: "Intermediate", ago: "2 min", priceINR: 799, priceUSD: 10, image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 5, title: "Waacking Session", instructor: "Princess K", viewers: 94, genre: "Vogue", level: "Advanced", ago: "41 min", priceINR: 449, priceUSD: 5, image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 6, title: "Zumba Morning Burn", instructor: "Sofia Reyes", viewers: 418, genre: "Zumba", level: "All Levels", ago: "8 min", priceINR: 549, priceUSD: 7, image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=420&fit=crop&auto=format&q=80" },
 ];
 
 const vids = [
@@ -43,6 +46,7 @@ const vids = [
   { id: 4, title: "Rhythm & Groove Theory", instructor: "Kayla Johnson", duration: "15:28", views: "310K", likes: "24K", genre: "Hip-Hop", level: "Beginner", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
   { id: 5, title: "Bharatanatyam Adavus", instructor: "Divya Sharma", duration: "42:18", views: "56K", likes: "4.8K", genre: "Classical", level: "Beginner", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=640&h=420&fit=crop&auto=format&q=80" },
   { id: 6, title: "Heels Choreo Masterclass", instructor: "Princess K", duration: "27:33", views: "178K", likes: "15K", genre: "Commercial", level: "Intermediate", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 7, title: "Zumba Cardio Party", instructor: "Sofia Reyes", duration: "29:45", views: "226K", likes: "19K", genre: "Zumba", level: "All Levels", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=420&fit=crop&auto=format&q=80" },
 ];
 
 const videographers = [
@@ -62,19 +66,21 @@ const teacherVideos = [
 
 const aiAnswers: Record<string, string> = {
   default: "Hey! I'm Groove AI — your dance assistant. Ask me about classes, pricing, booking a videographer, how to upload videos, or anything else 🎧",
-  class: "We have 800+ live and recorded classes across Hip-Hop, Salsa, Contemporary, Breaking, Kathak, Vogue, and more. Want a recommendation?",
-  price: "Starter ₹799/mo ($10) — all videos. Pro ₹1,999/mo ($25) — live + AI feedback. Annual saves 30%. Teachers earn 70% revenue share!",
+  class: "We have 800+ live and recorded classes across Hip-Hop, Salsa, Contemporary, Breaking, Kathak, Vogue, Zumba, and more. Want a recommendation?",
+  price: "Programs are priced individually in INR or USD. Live-class payments are held securely until completion; on-demand video sales have a ₹30 platform fee, with tax, processing, and FX shown separately.",
   beginner: "Start with '8-Count Foundations' or our live 'Breaking Basics' — both hit hard for beginners. Want me to add one to your schedule?",
   hip: "Hip-Hop is on fire! 🔥 Top: 'Breaking Basics' live (529 viewers), 'Rhythm & Groove Theory' (310K views), Kayla Johnson's 12-week program.",
-  billing: "I can help with plan upgrades, refund requests (within 7 days), or INR ↔ USD billing. What do you need?",
-  video: "To upload a video, go to the Earn tab → Upload Video. You can record directly using Front or Back camera, or upload from your device. Both camera angles are supported for dual-angle tutorials!",
+  billing: "Groovly supports eligible cards, PayPal, UPI apps, and provider-generated QR by country and device. If a payment is still confirming, do not pay again—use Check status with your transaction reference.",
+  video: "Open Earn → Video Studio Preview to explore recording, upload, pricing, and publishing steps. Real media storage and publishing require the production backend.",
   book: "To book a videographer, go to the Book Pro tab. You'll find vetted professionals across India with portfolio previews. Filter by city, specialty, or budget. Prices start from ₹5,000 per session!",
+  zumba: "Zumba is now in Find your rhythm, live classes, and on-demand videos. Try Sofia Reyes' Zumba Cardio Party for an all-level energy boost!",
 };
 function getAI(input: string) {
   const l = input.toLowerCase();
   if (l.includes("class") || l.includes("live")) return aiAnswers.class;
   if (l.includes("price") || l.includes("cost") || l.includes("plan") || l.includes("inr") || l.includes("usd") || l.includes("₹")) return aiAnswers.price;
   if (l.includes("begin") || l.includes("start") || l.includes("new")) return aiAnswers.beginner;
+  if (l.includes("zumba") || l.includes("dance fitness")) return aiAnswers.zumba;
   if (l.includes("hip") || l.includes("hop") || l.includes("break")) return aiAnswers.hip;
   if (l.includes("bill") || l.includes("refund") || l.includes("pay")) return aiAnswers.billing;
   if (l.includes("upload") || l.includes("record") || l.includes("video") || l.includes("camera")) return aiAnswers.video;
@@ -134,7 +140,7 @@ function SectionLabel({ icon: Icon, text, count, color = NEON }: { icon: any; te
 
 // ─── Promo Carousel ───────────────────────────────────────────────────────────
 
-function PromoCarousel({ currency }: { currency: Currency }) {
+function PromoCarousel({ currency, onCheckout }: { currency: Currency; onCheckout: (item: CheckoutItem) => void }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const p = promos[idx];
@@ -182,7 +188,7 @@ function PromoCarousel({ currency }: { currency: Currency }) {
               <span className="text-sm font-mono text-muted-foreground">{p.students} enrolled</span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button className="flex items-center gap-3 px-7 py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95" style={{ background: p.accent, color: "#000", boxShadow: `0 0 32px ${p.accent}70` }}>
+              <button onClick={() => onCheckout({ id: `program-${p.id}`, kind: "video", title: p.title.replace("\n", " "), instructor: p.instructor, price: currency === "INR" ? p.priceINR : p.priceUSD, thumbnailUrl: p.image })} className="flex items-center gap-3 px-7 py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95" style={{ background: p.accent, color: "#000", boxShadow: `0 0 32px ${p.accent}70` }}>
                 <Play size={16} fill="#000" /> Enroll — {fmt(p.priceINR, p.priceUSD, currency)}
               </button>
               <button className="flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold transition-all hover:scale-105" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(12px)" }}>
@@ -208,7 +214,7 @@ function PromoCarousel({ currency }: { currency: Currency }) {
 
 // ─── Live Classes ─────────────────────────────────────────────────────────────
 
-function LiveSection() {
+function LiveSection({ currency, onCheckout }: { currency: Currency; onCheckout: (item: CheckoutItem) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const scroll = (d: number) => ref.current?.scrollBy({ left: d, behavior: "smooth" });
   return (
@@ -245,6 +251,7 @@ function LiveSection() {
               <h4 className="font-bold text-[15px] mb-1 leading-snug group-hover:text-accent transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>{cls.title}</h4>
               <p className="text-xs mb-3" style={{ color: "#8A8AA4" }}>{cls.instructor}</p>
               <div className="flex items-center gap-1.5 text-xs font-mono" style={{ color: "#8A8AA4" }}><Clock size={11} />Started {cls.ago} ago</div>
+              <button onClick={() => onCheckout({ id: `live-${cls.id}`, kind: "live", title: cls.title, instructor: cls.instructor, price: currency === "INR" ? cls.priceINR : cls.priceUSD, startsAt: `Started ${cls.ago} ago`, thumbnailUrl: cls.image })} className="mt-4 min-h-10 w-full rounded-xl text-xs font-black" style={{ background: `${NEON}12`, border: `1px solid ${NEON}30`, color: NEON }}>Join live · {fmt(cls.priceINR, cls.priceUSD, currency)}</button>
             </div>
           </div>
         ))}
@@ -257,7 +264,7 @@ function LiveSection() {
 
 function VideosSection({ currency, saved, toggleSave }: { currency: Currency; saved: Set<number>; toggleSave: (id: number) => void }) {
   const [filter, setFilter] = useState("All");
-  const genres = ["All", "Hip-Hop", "Breaking", "Contemporary", "Classical", "Commercial"];
+  const genres = ["All", "Hip-Hop", "Breaking", "Contemporary", "Classical", "Commercial", "Zumba"];
   const filtered = filter === "All" ? vids : vids.filter(v => v.genre === filter);
   return (
     <section className="mb-24 px-4 md:px-8">
@@ -309,19 +316,21 @@ function HomeTab({
   saved,
   toggleSave,
   onNavigate,
+  onCheckout,
 }: {
   currency: Currency;
   saved: Set<number>;
   toggleSave: (id: number) => void;
   onNavigate: (tab: Tab) => void;
+  onCheckout: (item: CheckoutItem) => void;
 }) {
   const [query, setQuery] = useState("");
-  const styles = ["Hip-Hop", "Bollywood", "Contemporary", "Breaking", "Classical", "Salsa"];
+  const styles = ["Hip-Hop", "Bollywood", "Contemporary", "Breaking", "Classical", "Salsa", "Zumba"];
   const trustSignals = [
     "Live + on-demand",
     "Clear levels & formats",
     "INR + USD supported",
-    "Teachers keep 70%",
+    "Global teacher payouts",
   ];
 
   return (
@@ -344,13 +353,13 @@ function HomeTab({
               <br />
               <BlurRise delay={0.32}>
                 <span style={{ background: "linear-gradient(90deg, " + NEON + " 0%, #00C8FF 34%, " + NEON2 + " 68%, " + PINK + " 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Teach what moves you.
+                  Earn from what moves you.
                 </span>
               </BlurRise>
             </h1>
 
             <p className="text-base md:text-lg leading-relaxed mb-7 max-w-2xl" style={{ color: "#B0B0C6" }}>
-              Join live sessions, master on-demand programs, book private coaching—or turn your own style into classes learners love.
+              Join live sessions, master on-demand programs, book private coaching—or turn your own style into income with clear, protected payment flows.
             </p>
 
             <form
@@ -379,7 +388,7 @@ function HomeTab({
                 <GraduationCap size={16} /> I want to learn
               </button>
               <button onClick={() => onNavigate("earn")} className="min-h-11 px-5 rounded-xl text-sm font-bold flex items-center gap-2" style={{ background: "rgba(255,184,0,0.08)", border: "1px solid rgba(255,184,0,0.24)", color: "#FFD66B" }}>
-                <DollarSign size={16} /> I want to teach
+                <DollarSign size={16} /> I want to earn
               </button>
             </div>
           </div>
@@ -418,7 +427,7 @@ function HomeTab({
       </section>
 
       <div className="relative pt-10 md:pt-12" style={{ zIndex: 1 }}>
-        <LiveSection />
+        <LiveSection currency={currency} onCheckout={onCheckout} />
 
         <section className="px-4 md:px-8 mb-16">
           <SectionLabel icon={Music} text="Find your rhythm" count="Choose a style" color={NEON2} />
@@ -451,18 +460,18 @@ function HomeTab({
               <article className="relative z-[3] p-6 md:p-8 min-h-[330px] flex flex-col">
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-7" style={{ background: "rgba(255,184,0,0.09)", border: "1px solid rgba(255,184,0,0.22)", color: GOLD }}><Crown size={22} /></div>
                 <p className="font-mono text-[10px] tracking-[0.2em] uppercase mb-3" style={{ color: "#FFD66B" }}>For instructors</p>
-                <h2 className="text-3xl md:text-4xl font-black mb-3">Your style deserves a stage.</h2>
+                <h2 className="text-3xl md:text-4xl font-black mb-3">Turn your rhythm into income.</h2>
                 <p className="text-sm leading-relaxed mb-6" style={{ color: "#A8A8BC" }}>Create live classes and video programs with publishing, payments and learner tools in one studio.</p>
                 <div className="space-y-2.5 mb-7 text-sm" style={{ color: "#D3D3DF" }}>
-                  {["Publish from camera or uploaded video", "Track views and course earnings", "Keep 70% of every sale"].map(item => <div key={item} className="flex items-center gap-2"><Check size={14} style={{ color: GOLD }} />{item}</div>)}
+                  {["Publish from camera or uploaded video", "Live earnings release to your wallet", "₹30 platform fee per completed video sale"].map(item => <div key={item} className="flex items-center gap-2"><Check size={14} style={{ color: GOLD }} />{item}</div>)}
                 </div>
-                <button onClick={() => onNavigate("earn")} className="mt-auto min-h-12 px-5 rounded-xl font-black flex items-center justify-between" style={{ background: GOLD, color: "#000" }}>Become an instructor <ArrowRight size={17} /></button>
+                <button onClick={() => onNavigate("earn")} className="mt-auto min-h-12 px-5 rounded-xl font-black flex items-center justify-between" style={{ background: GOLD, color: "#000" }}>Open my earning studio <ArrowRight size={17} /></button>
               </article>
             </SpotlightCard>
           </div>
         </section>
 
-        <PromoCarousel currency={currency} />
+        <PromoCarousel currency={currency} onCheckout={onCheckout} />
         <VideosSection currency={currency} saved={saved} toggleSave={toggleSave} />
 
         <section className="px-4 md:px-8 mb-24">
@@ -476,7 +485,7 @@ function HomeTab({
               </div>
               <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
                 <button onClick={() => onNavigate("learn")} className="min-h-12 px-6 rounded-xl font-black flex items-center justify-center gap-2 whitespace-nowrap" style={{ background: NEON, color: "#000" }}>Explore classes <ArrowRight size={16} /></button>
-                <button onClick={() => onNavigate("earn")} className="min-h-12 px-6 rounded-xl font-black flex items-center justify-center gap-2 whitespace-nowrap" style={{ background: "rgba(0,0,0,0.28)", border: "1px solid rgba(255,255,255,0.14)" }}>Start teaching <ArrowRight size={16} /></button>
+                <button onClick={() => onNavigate("earn")} className="min-h-12 px-6 rounded-xl font-black flex items-center justify-center gap-2 whitespace-nowrap" style={{ background: "rgba(0,0,0,0.28)", border: "1px solid rgba(255,255,255,0.14)" }}>Start earning <ArrowRight size={16} /></button>
               </div>
             </div>
           </div>
@@ -487,9 +496,9 @@ function HomeTab({
 }
 // ─── Learn Tab (Students) ─────────────────────────────────────────────────────
 
-function LearnTab({ currency }: { currency: Currency }) {
+function LearnTab({ currency, onCheckout }: { currency: Currency; onCheckout: (item: CheckoutItem) => void }) {
   const [activeCat, setActiveCat] = useState("All Styles");
-  const cats = ["All Styles", "Hip-Hop", "Breaking", "Latin", "Contemporary", "Classical", "Vogue"];
+  const cats = ["All Styles", "Hip-Hop", "Breaking", "Latin", "Contemporary", "Classical", "Vogue", "Zumba"];
   const courses = [
     { id: 1, title: "The Complete Hip-Hop Dancer", instructor: "Kayla Johnson", lessons: 48, duration: "12 hrs", level: "All Levels", priceINR: 3999, priceUSD: 49, rating: 4.9, students: "14.8K", progress: 32, genre: "Hip-Hop", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=400&fit=crop&auto=format&q=80" },
     { id: 2, title: "Breaking: Zero to Hero", instructor: "Urban Flex", lessons: 36, duration: "9 hrs", level: "Beginner", priceINR: 2499, priceUSD: 30, rating: 4.8, students: "8.1K", progress: 0, genre: "Breaking", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=400&fit=crop&auto=format&q=80" },
@@ -497,6 +506,7 @@ function LearnTab({ currency }: { currency: Currency }) {
     { id: 4, title: "Contemporary Movement Lab", instructor: "Arya Kapoor", lessons: 52, duration: "14 hrs", level: "Intermediate", priceINR: 4499, priceUSD: 55, rating: 4.9, students: "5.4K", progress: 67, genre: "Contemporary", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=400&fit=crop&auto=format&q=80" },
     { id: 5, title: "Bharatanatyam: Classical Forms", instructor: "Divya Sharma", lessons: 60, duration: "16 hrs", level: "Beginner", priceINR: 3499, priceUSD: 42, rating: 4.8, students: "7.9K", progress: 0, genre: "Classical", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=640&h=400&fit=crop&auto=format&q=80" },
     { id: 6, title: "Vogue & Waacking Foundations", instructor: "Princess K", lessons: 24, duration: "6 hrs", level: "All Levels", priceINR: 1499, priceUSD: 18, rating: 4.6, students: "3.8K", progress: 0, genre: "Vogue", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 7, title: "Zumba Cardio Party", instructor: "Sofia Reyes", lessons: 30, duration: "8 hrs", level: "All Levels", priceINR: 1799, priceUSD: 22, rating: 4.9, students: "12.6K", progress: 0, genre: "Zumba", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=400&fit=crop&auto=format&q=80" },
   ];
   const filtered = activeCat === "All Styles" ? courses : courses.filter(c => c.genre === activeCat);
   const enrolled = courses.filter(c => c.progress > 0);
@@ -577,7 +587,7 @@ function LearnTab({ currency }: { currency: Currency }) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-black text-base" style={{ fontFamily: "Outfit, sans-serif", color: NEON2 }}>{fmt(c.priceINR, c.priceUSD, currency)}</span>
-                <button className="px-4 py-2 rounded-xl text-[12px] font-bold transition-all hover:scale-105 active:scale-95"
+                <button onClick={() => { if (c.progress === 0) onCheckout({ id: `course-${c.id}`, kind: "video", title: c.title, instructor: c.instructor, price: currency === "INR" ? c.priceINR : c.priceUSD, duration: c.duration, thumbnailUrl: c.image }); }} className="px-4 py-2 rounded-xl text-[12px] font-bold transition-all hover:scale-105 active:scale-95"
                   style={{ background: `${NEON2}18`, color: NEON2, border: `1px solid ${NEON2}35` }}>
                   {c.progress > 0 ? "Resume" : "Enroll"}
                 </button>
@@ -595,12 +605,13 @@ function LearnTab({ currency }: { currency: Currency }) {
 type UploadStep = "idle" | "details" | "recording" | "preview" | "done";
 type CamMode = "front" | "back";
 
-function EarnTab({ currency }: { currency: Currency }) {
+function EarnTab({ currency, onOpenAccount }: { currency: Currency; onOpenAccount: () => void }) {
   const [step, setStep] = useState<UploadStep>("idle");
   const [camMode, setCamMode] = useState<CamMode>("front");
   const [isRecording, setIsRecording] = useState(false);
   const [recordSecs, setRecordSecs] = useState(0);
   const [form, setForm] = useState({ title: "", genre: "Hip-Hop", level: "Beginner", desc: "", price: "", uploadType: "" as "" | "record" | "file" });
+  const validPrice = Number(form.price) > 0;
 
   useEffect(() => {
     if (!isRecording) { setRecordSecs(0); return; }
@@ -619,13 +630,15 @@ function EarnTab({ currency }: { currency: Currency }) {
       <div className="mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4" style={{ background: `${GOLD}0C`, border: `1px solid ${GOLD}20` }}>
           <DollarSign size={11} style={{ color: GOLD }} />
-          <span className="font-mono text-[10px] tracking-[0.2em] uppercase font-bold" style={{ color: GOLD }}>Teacher Studio</span>
+          <span className="font-mono text-[10px] tracking-[0.2em] uppercase font-bold" style={{ color: GOLD }}>Earning Studio</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-black mb-3" style={{ fontFamily: "Outfit, sans-serif", letterSpacing: "-0.02em" }}>
-          Teach. Upload.<br /><span style={{ background: `linear-gradient(90deg, ${GOLD}, ${PINK})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Earn Every Day.</span>
+          Go live. Upload.<br /><span style={{ background: `linear-gradient(90deg, ${GOLD}, ${PINK})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Earn Globally.</span>
         </h1>
-        <p className="text-[15px]" style={{ color: "#8A8AA4" }}>You keep 70% of every sale. Upload videos once, earn forever.</p>
+        <p className="text-[15px] max-w-3xl leading-relaxed" style={{ color: "#A8A8BC" }}>Live-class payments release to your Groovly Wallet after the class and issue window. On-demand videos settle to the creator minus a ₹30 platform fee.</p>
       </div>
+
+      <TeacherCommerceHub currency={currency} onOpenAccount={onOpenAccount} />
 
       {/* Earnings overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
@@ -648,7 +661,8 @@ function EarnTab({ currency }: { currency: Currency }) {
       {/* Upload CTA */}
       {step === "idle" && (
         <div className="mb-12">
-          <SectionLabel icon={Upload} text="Upload a New Video" color={GOLD} />
+          <SectionLabel icon={Upload} text="Video Studio Preview" color={GOLD} />
+          <div className="mb-5 flex items-start gap-2.5 rounded-xl p-3.5 text-[11px] leading-relaxed" style={{ background: "rgba(255,184,0,0.06)", border: "1px solid rgba(255,184,0,0.18)", color: "#B8B8C8" }}><Lock size={15} className="mt-0.5 flex-none" style={{ color: GOLD }} /><p><strong style={{ color: "#FFE08A" }}>Studio preview:</strong> no recording, file storage, processing, entitlement, or publishing happens in this interface. Those actions require authenticated production services.</p></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Record */}
             <button onClick={() => { setForm(f => ({ ...f, uploadType: "record" })); setStep("details"); }}
@@ -659,7 +673,7 @@ function EarnTab({ currency }: { currency: Currency }) {
                 <Camera size={24} style={{ color: NEON }} />
               </div>
               <h3 className="text-lg font-black mb-2" style={{ fontFamily: "Outfit, sans-serif" }}>Record with Camera</h3>
-              <p className="text-sm leading-relaxed mb-4" style={{ color: "#8A8AA4" }}>Record directly using your front or back camera. Perfect for tutorials with dual-angle support.</p>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "#8A8AA4" }}>Preview a front- or back-camera recording setup for dual-angle tutorials.</p>
               <div className="flex gap-3">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-mono font-bold" style={{ background: `${NEON}12`, border: `1px solid ${NEON}25`, color: NEON }}>
                   <FlipHorizontal size={10} /> Front Camera
@@ -679,7 +693,7 @@ function EarnTab({ currency }: { currency: Currency }) {
                 <Upload size={24} style={{ color: NEON2 }} />
               </div>
               <h3 className="text-lg font-black mb-2" style={{ fontFamily: "Outfit, sans-serif" }}>Upload from Device</h3>
-              <p className="text-sm leading-relaxed mb-4" style={{ color: "#8A8AA4" }}>Upload a pre-recorded video from your phone or computer. Supports MP4, MOV, AVI up to 4GB.</p>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "#8A8AA4" }}>Preview the flow for a pre-recorded MP4 or MOV. Real uploads require secure storage, scanning, and processing.</p>
               <div className="flex gap-3">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-mono font-bold" style={{ background: `${NEON2}12`, border: `1px solid ${NEON2}25`, color: NEON2 }}>
                   <Film size={10} /> MP4 / MOV
@@ -704,7 +718,7 @@ function EarnTab({ currency }: { currency: Currency }) {
             {[
               { label: "Video Title", key: "title", placeholder: "e.g. Beginner Hip-Hop Footwork — Part 1" },
               { label: "Description", key: "desc", placeholder: "What will students learn in this video?" },
-              { label: "Price (in your currency)", key: "price", placeholder: currency === "INR" ? "e.g. ₹499" : "e.g. $6" },
+              { label: "Price (in your currency)", key: "price", placeholder: currency === "INR" ? "e.g. 499" : "e.g. 6" },
             ].map(f => (
               <div key={f.key}>
                 <label className="block text-xs font-mono uppercase tracking-wider mb-2" style={{ color: "#8A8AA4" }}>{f.label}</label>
@@ -714,7 +728,7 @@ function EarnTab({ currency }: { currency: Currency }) {
                     className="w-full rounded-xl px-4 py-3 text-[13px] outline-none placeholder:text-muted-foreground transition-all resize-none"
                     style={{ background: "#0E0E1A", border: "1px solid rgba(255,255,255,0.07)", color: "#F0F0FF" }} />
                 ) : (
-                  <input value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                  <input type={f.key === "price" ? "number" : "text"} min={f.key === "price" ? "1" : undefined} step={f.key === "price" ? "1" : undefined} inputMode={f.key === "price" ? "numeric" : undefined} value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
                     placeholder={f.placeholder}
                     className="w-full rounded-xl px-4 py-3 text-[13px] outline-none placeholder:text-muted-foreground transition-all"
                     style={{ background: "#0E0E1A", border: "1px solid rgba(255,255,255,0.07)", color: "#F0F0FF" }} />
@@ -727,7 +741,7 @@ function EarnTab({ currency }: { currency: Currency }) {
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider mb-2" style={{ color: "#8A8AA4" }}>Genre</label>
                 <div className="flex flex-wrap gap-2">
-                  {["Hip-Hop", "Contemporary", "Breaking", "Classical", "Salsa", "Commercial"].map(g => (
+                  {["Hip-Hop", "Contemporary", "Breaking", "Classical", "Salsa", "Commercial", "Zumba"].map(g => (
                     <button key={g} onClick={() => setForm(prev => ({ ...prev, genre: g }))}
                       className="px-3 py-1.5 rounded-full text-[11px] font-mono font-bold transition-all"
                       style={form.genre === g
@@ -755,10 +769,10 @@ function EarnTab({ currency }: { currency: Currency }) {
             </div>
 
             <button onClick={() => setStep(form.uploadType === "record" ? "recording" : "preview")}
-              disabled={!form.title.trim()}
+              disabled={!form.title.trim() || !validPrice}
               className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-[13px] font-black tracking-wide transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100"
-              style={{ background: form.title.trim() ? `linear-gradient(90deg, ${NEON}, ${NEON2})` : "#0E0E1A", color: form.title.trim() ? "#000" : "#8A8AA4", boxShadow: form.title.trim() ? `0 0 24px ${NEON}30` : "none", fontFamily: "Outfit, sans-serif" }}>
-              {form.uploadType === "record" ? <><Camera size={15} /> Start Recording</> : <><Upload size={15} /> Choose Video File</>}
+              style={{ background: form.title.trim() && validPrice ? `linear-gradient(90deg, ${NEON}, ${NEON2})` : "#0E0E1A", color: form.title.trim() && validPrice ? "#000" : "#8A8AA4", boxShadow: form.title.trim() && validPrice ? `0 0 24px ${NEON}30` : "none", fontFamily: "Outfit, sans-serif" }}>
+              {form.uploadType === "record" ? <><Camera size={15} /> Start Recording</> : <><Upload size={15} /> Continue File Preview</>}
               <ArrowRight size={14} />
             </button>
           </div>
@@ -824,7 +838,7 @@ function EarnTab({ currency }: { currency: Currency }) {
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-6">
             <button onClick={() => setStep("details")} className="w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-all" style={{ background: "#0E0E1A", border: "1px solid rgba(255,255,255,0.07)" }}><ChevronLeft size={15} /></button>
-            <SectionLabel icon={Eye} text="Review & Publish" color={NEON} />
+            <SectionLabel icon={Eye} text="Review Publish Setup" color={NEON} />
           </div>
           <div className="max-w-2xl p-6 rounded-2xl" style={{ background: "#080810", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-start gap-4 mb-6">
@@ -843,12 +857,12 @@ function EarnTab({ currency }: { currency: Currency }) {
             </div>
             <div className="flex items-center gap-2.5 p-3.5 rounded-xl mb-6" style={{ background: `${GOLD}08`, border: `1px solid ${GOLD}20` }}>
               <IndianRupee size={14} style={{ color: GOLD }} />
-              <p className="text-[12px]" style={{ color: "#B0B0C0" }}>You keep <span className="font-bold" style={{ color: GOLD }}>70%</span> of every sale — paid out weekly in {currency}.</p>
+              <p className="text-[12px] leading-relaxed" style={{ color: "#B0B0C0" }}>Groovly deducts <span className="font-bold" style={{ color: GOLD }}>₹30 per completed video sale</span>. Taxes, processing, and currency conversion are calculated securely and shown separately before settlement in {currency}.</p>
             </div>
             <button onClick={() => setStep("done")}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-[13px] font-black tracking-wide transition-all hover:scale-[1.02] active:scale-[0.98]"
               style={{ background: `linear-gradient(90deg, ${NEON}, ${NEON2})`, color: "#000", boxShadow: `0 0 30px ${NEON}30`, fontFamily: "Outfit, sans-serif" }}>
-              <CheckCircle size={15} /> Publish Video
+              <CheckCircle size={15} /> Preview Publish
             </button>
           </div>
         </div>
@@ -861,12 +875,12 @@ function EarnTab({ currency }: { currency: Currency }) {
             <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ background: `${NEON}15`, border: `1px solid ${NEON}40`, boxShadow: `0 0 30px ${NEON}30` }}>
               <Check size={28} style={{ color: NEON }} />
             </div>
-            <h3 className="text-2xl font-black mb-2" style={{ fontFamily: "Outfit, sans-serif" }}>Video Published! 🎉</h3>
-            <p className="text-sm mb-7" style={{ color: "#8A8AA4" }}>"{form.title}" is now live. Students can find it in the Learn tab — earnings appear in your dashboard as sales come in.</p>
+            <h3 className="text-2xl font-black mb-2" style={{ fontFamily: "Outfit, sans-serif" }}>Publish Flow Preview Ready</h3>
+            <p className="text-sm mb-7" style={{ color: "#8A8AA4" }}>No video was uploaded or published. "{form.title}" is ready for a future authenticated media, moderation, entitlement, and settlement backend.</p>
             <button onClick={() => { setStep("idle"); setForm({ title: "", genre: "Hip-Hop", level: "Beginner", desc: "", price: "", uploadType: "" }); }}
               className="px-6 py-3 rounded-xl text-[12px] font-black transition-all hover:scale-105"
               style={{ background: `${NEON}12`, border: `1px solid ${NEON}30`, color: NEON, fontFamily: "Outfit, sans-serif" }}>
-              <Plus size={13} className="inline mr-1.5 -mt-0.5" />Upload Another
+              <Plus size={13} className="inline mr-1.5 -mt-0.5" />Reset Preview
             </button>
           </div>
         </div>
@@ -1107,7 +1121,7 @@ function ChatWidget({ onClose }: { onClose: () => void }) {
 const NAV: { id: Tab; label: string; icon: any; color: string }[] = [
   { id: "home", label: "Explore", icon: Home, color: NEON },
   { id: "learn", label: "Learn", icon: GraduationCap, color: NEON2 },
-  { id: "earn", label: "Teach", icon: DollarSign, color: GOLD },
+  { id: "earn", label: "Earn", icon: DollarSign, color: GOLD },
   { id: "book", label: "Book Pro", icon: Camera, color: PINK },
 ];
 
@@ -1116,8 +1130,18 @@ export default function App() {
   const [currency, setCurrency] = useState<Currency>("INR");
   const [chatOpen, setChatOpen] = useState(false);
   const [saved, setSaved] = useState(new Set([2, 5]));
+  const [authView, setAuthView] = useState<AuthMode | null>(null);
+  const [accountRole, setAccountRole] = useState<AccountRole | null>(null);
+  const [checkoutItem, setCheckoutItem] = useState<CheckoutItem | null>(null);
+  const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus>("idle");
 
   const toggleSave = useCallback((id: number) => setSaved(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }), []);
+  const openCheckout = useCallback((item: CheckoutItem) => { setCheckoutItem(item); setCheckoutStatus("idle"); }, []);
+  const closeCheckout = useCallback(() => { setCheckoutItem(null); setCheckoutStatus("idle"); }, []);
+
+  if (authView) {
+    return <AuthPage initialMode={authView} onBack={() => setAuthView(null)} onAuthenticated={(role, mode) => { setAuthView(null); if (mode === "signup") { setAccountRole(role); setTab(role === "teacher" ? "earn" : "learn"); } }} />;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0" style={{ fontFamily: "Manrope, sans-serif" }}>
@@ -1165,8 +1189,11 @@ export default function App() {
           <Globe size={11} /> {currency}
         </button>
 
-        <button onClick={() => setTab("learn")} className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black transition-all hover:scale-[1.03]" style={{ background: NEON, color: "#000" }}>
-          Get started <ArrowRight size={13} />
+        <button onClick={() => setAuthView("login")} aria-label={accountRole ? `Open ${accountRole} account preview` : "Log in"} className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-bold transition-all hover:scale-[1.03]" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", color: "#D4D4E2" }}>
+          <User size={13} /><span className="hidden sm:inline">{accountRole ? `${accountRole === "teacher" ? "Teacher" : "Learner"} preview` : "Log in"}</span>
+        </button>
+        <button onClick={() => setAuthView("signup")} className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black transition-all hover:scale-[1.03]" style={{ background: NEON, color: "#000" }}>
+          Join now <ArrowRight size={13} />
         </button>
         {/* AI Button */}
         <button onClick={() => setChatOpen(o => !o)} aria-label={chatOpen ? "Close Groove AI" : "Open Groove AI"}
@@ -1183,9 +1210,9 @@ export default function App() {
       {/* ── Active tab ── */}
       <main className="relative max-w-[1400px] mx-auto" style={{ zIndex: 1 }}>
         <div key={tab} className="tab-enter">
-          {tab === "home" && <HomeTab currency={currency} saved={saved} toggleSave={toggleSave} onNavigate={setTab} />}
-          {tab === "learn" && <LearnTab currency={currency} />}
-          {tab === "earn" && <EarnTab currency={currency} />}
+          {tab === "home" && <HomeTab currency={currency} saved={saved} toggleSave={toggleSave} onNavigate={setTab} onCheckout={openCheckout} />}
+          {tab === "learn" && <LearnTab currency={currency} onCheckout={openCheckout} />}
+          {tab === "earn" && <EarnTab currency={currency} onOpenAccount={() => setAuthView("signup")} />}
           {tab === "book" && <BookTab currency={currency} />}
         </div>
       </main>
@@ -1203,6 +1230,7 @@ export default function App() {
 
       {/* Chat */}
       {chatOpen && <ChatWidget onClose={() => setChatOpen(false)} />}
+      <CheckoutPreview open={Boolean(checkoutItem)} item={checkoutItem} currency={currency} countryCode={currency === "INR" ? "IN" : "US"} status={checkoutStatus} paymentReference="GRV-DEMO-7J4K92" providerName="the connected payment provider" onClose={closeCheckout} onContinue={() => setCheckoutStatus("pending")} onCheckStatus={async () => { await new Promise<void>(resolve => window.setTimeout(resolve, 450)); setCheckoutStatus("paid"); }} />
     </div>
   );
 }

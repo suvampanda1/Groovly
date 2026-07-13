@@ -68,8 +68,10 @@ export function CountUp({
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   const [val, setVal] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reduceMotion) return;
     if (!inView) return;
     let raf = 0;
     const t0 = performance.now();
@@ -81,11 +83,13 @@ export function CountUp({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, to, duration]);
+  }, [inView, to, duration, reduceMotion]);
+
+  const displayVal = reduceMotion ? to : val;
 
   return (
     <span ref={ref} className={className} style={style}>
-      {prefix}{val.toFixed(decimals)}{suffix}
+      {prefix}{displayVal.toFixed(decimals)}{suffix}
     </span>
   );
 }
@@ -97,24 +101,43 @@ export function SpotlightCard({
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: -999, y: -999 });
   const [over, setOver] = useState(false);
+  const [finePointer, setFinePointer] = useState(false);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const pointerQuery = window.matchMedia("(pointer: fine)");
+    const syncPointer = () => setFinePointer(pointerQuery.matches);
+    syncPointer();
+    pointerQuery.addEventListener("change", syncPointer);
+    return () => pointerQuery.removeEventListener("change", syncPointer);
+  }, []);
+
+  const interactive = finePointer && !reduceMotion;
+
+  useEffect(() => {
+    if (!interactive) {
+      setOver(false);
+      setPos(current => current.x === -999 && current.y === -999 ? current : { x: -999, y: -999 });
+    }
+  }, [interactive]);
 
   return (
     <div
       ref={ref}
       className={className}
       style={{ position: "relative", ...style }}
-      onMouseMove={e => {
+      onMouseMove={interactive ? e => {
         const r = ref.current?.getBoundingClientRect();
         if (r) setPos({ x: e.clientX - r.left, y: e.clientY - r.top });
-      }}
-      onMouseEnter={() => setOver(true)}
-      onMouseLeave={() => setOver(false)}
+      } : undefined}
+      onMouseEnter={interactive ? () => setOver(true) : undefined}
+      onMouseLeave={interactive ? () => setOver(false) : undefined}
     >
       <div
         aria-hidden
         style={{
           position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none", zIndex: 2,
-          opacity: over ? 1 : 0, transition: "opacity 0.4s ease",
+          opacity: interactive && over ? 1 : 0, transition: "opacity 0.4s ease",
           background: `radial-gradient(380px circle at ${pos.x}px ${pos.y}px, ${color}, transparent 65%)`,
         }}
       />
