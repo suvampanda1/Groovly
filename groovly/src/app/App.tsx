@@ -1237,11 +1237,15 @@ export default function App() {
           <Globe size={11} /> {currency}
         </button>
 
-        <button onClick={() => setAuthView("login")} aria-label={accountRole ? `Open ${accountRole} account preview` : "Log in"} className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-bold transition-all hover:scale-[1.03]" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", color: "#D4D4E2" }}>
-          <User size={13} /><span className="hidden sm:inline">{accountRole ? `${accountRole === "teacher" ? "Teacher" : "Learner"} preview` : "Log in"}</span>
-        </button>
-        <button onClick={() => setAuthView("signup")} className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black transition-all hover:scale-[1.03]" style={{ background: NEON, color: "#000" }}>
-          Join now <ArrowRight size={13} />
+        <button
+          onClick={() => setAuthView(accountRole ? "login" : "signup")}
+          aria-label={accountRole ? `Open ${accountRole} account preview` : "Join Groovly"}
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-[12px] font-black transition-all hover:scale-[1.03]"
+          style={{ background: NEON, color: "#000" }}
+        >
+          <User size={13} />
+          <span className="hidden sm:inline">{accountRole ? `${accountRole === "teacher" ? "Teacher" : "Learner"} preview` : "Join now"}</span>
+          <ArrowRight size={13} className="hidden md:block" />
         </button>
         {/* AI Button */}
         <button onClick={() => setChatOpen(o => !o)} aria-label={chatOpen ? "Close Groove AI" : "Open Groove AI"}
