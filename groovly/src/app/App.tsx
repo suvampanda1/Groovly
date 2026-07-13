@@ -4,6 +4,15 @@ import { AuthPage, type AccountRole, type AuthMode } from "./components/account/
 import { TeacherCommerceHub } from "./components/account/TeacherCommerceHub";
 import { CheckoutPreview, type CheckoutItem, type CheckoutStatus } from "./components/account/CheckoutPreview";
 import {
+  DISCOVERY_STORAGE_KEY,
+  LocationPicker,
+  RegionalSpotlight,
+  getDiscoveryRegion,
+  rankByRegion,
+  readStoredDiscoveryRegionKey,
+  type DiscoveryRegion,
+} from "./components/discovery/RegionalDiscovery";
+import {
   Play, Radio, Users, Clock, ChevronRight, X, Send, Sparkles, Star,
   TrendingUp, Zap, Music, Search, Home, Video, BookOpen, User,
   ChevronLeft, Globe, Heart, Share2, Bookmark, ArrowRight, Flame,
@@ -25,28 +34,28 @@ const GOLD = "#FFB800";
 // ─── Shared Data ─────────────────────────────────────────────────────────────
 
 const promos = [
-  { id: 1, tag: "BESTSELLER", label: "12-Week Intensive", title: "Master Hip-Hop\nFundamentals", instructor: "Kayla Johnson", priceINR: 3999, priceUSD: 49, rating: 4.9, students: "14.8K", accent: NEON, image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=1400&h=700&fit=crop&auto=format&q=80" },
-  { id: 2, tag: "NEW DROP", label: "International Artist", title: "Contemporary\nFlow Masterclass", instructor: "Arjun Mehta", priceINR: 2799, priceUSD: 34, rating: 4.8, students: "8.3K", accent: NEON2, image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=1400&h=700&fit=crop&auto=format&q=80" },
-  { id: 3, tag: "🔥 TRENDING", label: "Classical × Street", title: "Bollywood\nFusion Revolution", instructor: "Priya Nair", priceINR: 1999, priceUSD: 24, rating: 4.7, students: "21.5K", accent: PINK, image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=1400&h=700&fit=crop&auto=format&q=80" },
+  { id: 1, tag: "BESTSELLER", label: "12-Week Intensive", title: "Master Hip-Hop\nFundamentals", instructor: "Kayla Johnson", priceINR: 3999, priceUSD: 49, rating: 4.9, students: "14.8K", accent: NEON, regionKey: "new-york", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=1400&h=700&fit=crop&auto=format&q=80" },
+  { id: 2, tag: "NEW DROP", label: "International Artist", title: "Contemporary\nFlow Masterclass", instructor: "Arjun Mehta", priceINR: 2799, priceUSD: 34, rating: 4.8, students: "8.3K", accent: NEON2, regionKey: "bengaluru", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=1400&h=700&fit=crop&auto=format&q=80" },
+  { id: 3, tag: "🔥 TRENDING", label: "Classical × Street", title: "Bollywood\nFusion Revolution", instructor: "Priya Nair", priceINR: 1999, priceUSD: 24, rating: 4.7, students: "21.5K", accent: PINK, regionKey: "mumbai", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=1400&h=700&fit=crop&auto=format&q=80" },
 ];
 
 const lives = [
-  { id: 1, title: "Breaking Basics", instructor: "DJ Kross", viewers: 342, genre: "Hip-Hop", level: "Beginner", ago: "12 min", priceINR: 499, priceUSD: 6, image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 2, title: "Salsa Caliente", instructor: "Maria Cruz", viewers: 187, genre: "Latin", level: "Intermediate", ago: "5 min", priceINR: 699, priceUSD: 9, image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 3, title: "Popping & Locking", instructor: "Urban Flex", viewers: 529, genre: "Street", level: "All Levels", ago: "28 min", priceINR: 599, priceUSD: 7, image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 4, title: "Kathak Fusion", instructor: "Divya Sharma", viewers: 211, genre: "Classical", level: "Intermediate", ago: "2 min", priceINR: 799, priceUSD: 10, image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 5, title: "Waacking Session", instructor: "Princess K", viewers: 94, genre: "Vogue", level: "Advanced", ago: "41 min", priceINR: 449, priceUSD: 5, image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 6, title: "Zumba Morning Burn", instructor: "Sofia Reyes", viewers: 418, genre: "Zumba", level: "All Levels", ago: "8 min", priceINR: 549, priceUSD: 7, image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 1, title: "Breaking Basics", instructor: "DJ Kross", viewers: 342, genre: "Hip-Hop", level: "Beginner", ago: "12 min", priceINR: 499, priceUSD: 6, regionKey: "delhi", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 2, title: "Salsa Caliente", instructor: "Maria Cruz", viewers: 187, genre: "Latin", level: "Intermediate", ago: "5 min", priceINR: 699, priceUSD: 9, regionKey: "singapore", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 3, title: "Popping & Locking", instructor: "Urban Flex", viewers: 529, genre: "Street", level: "All Levels", ago: "28 min", priceINR: 599, priceUSD: 7, regionKey: "delhi", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 4, title: "Kathak Fusion", instructor: "Divya Sharma", viewers: 211, genre: "Classical", level: "Intermediate", ago: "2 min", priceINR: 799, priceUSD: 10, regionKey: "bhubaneswar", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 5, title: "Waacking Session", instructor: "Princess K", viewers: 94, genre: "Vogue", level: "Advanced", ago: "41 min", priceINR: 449, priceUSD: 5, regionKey: "london", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 6, title: "Zumba Morning Burn", instructor: "Sofia Reyes", viewers: 418, genre: "Zumba", level: "All Levels", ago: "8 min", priceINR: 549, priceUSD: 7, regionKey: "dubai", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=420&fit=crop&auto=format&q=80" },
 ];
 
 const vids = [
-  { id: 1, title: "8-Count Foundations", instructor: "Mia Rodriguez", duration: "18:42", views: "142K", likes: "9.2K", genre: "Hip-Hop", level: "Beginner", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 2, title: "Footwork Drills for Speed", instructor: "Tommy Lee", duration: "24:10", views: "87K", likes: "5.1K", genre: "Breaking", level: "Intermediate", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 3, title: "Flexibility & Body Control", instructor: "Arya Kapoor", duration: "31:05", views: "203K", likes: "18K", genre: "Contemporary", level: "All Levels", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 4, title: "Rhythm & Groove Theory", instructor: "Kayla Johnson", duration: "15:28", views: "310K", likes: "24K", genre: "Hip-Hop", level: "Beginner", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 5, title: "Bharatanatyam Adavus", instructor: "Divya Sharma", duration: "42:18", views: "56K", likes: "4.8K", genre: "Classical", level: "Beginner", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 6, title: "Heels Choreo Masterclass", instructor: "Princess K", duration: "27:33", views: "178K", likes: "15K", genre: "Commercial", level: "Intermediate", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
-  { id: 7, title: "Zumba Cardio Party", instructor: "Sofia Reyes", duration: "29:45", views: "226K", likes: "19K", genre: "Zumba", level: "All Levels", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 1, title: "8-Count Foundations", instructor: "Mia Rodriguez", duration: "18:42", views: "142K", likes: "9.2K", genre: "Hip-Hop", level: "Beginner", regionKey: "mumbai", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 2, title: "Footwork Drills for Speed", instructor: "Tommy Lee", duration: "24:10", views: "87K", likes: "5.1K", genre: "Breaking", level: "Intermediate", regionKey: "delhi", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 3, title: "Flexibility & Body Control", instructor: "Arya Kapoor", duration: "31:05", views: "203K", likes: "18K", genre: "Contemporary", level: "All Levels", regionKey: "bengaluru", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 4, title: "Rhythm & Groove Theory", instructor: "Kayla Johnson", duration: "15:28", views: "310K", likes: "24K", genre: "Hip-Hop", level: "Beginner", regionKey: "new-york", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 5, title: "Bharatanatyam Adavus", instructor: "Divya Sharma", duration: "42:18", views: "56K", likes: "4.8K", genre: "Classical", level: "Beginner", regionKey: "bhubaneswar", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 6, title: "Heels Choreo Masterclass", instructor: "Princess K", duration: "27:33", views: "178K", likes: "15K", genre: "Commercial", level: "Intermediate", regionKey: "london", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=420&fit=crop&auto=format&q=80" },
+  { id: 7, title: "Zumba Cardio Party", instructor: "Sofia Reyes", duration: "29:45", views: "226K", likes: "19K", genre: "Zumba", level: "All Levels", regionKey: "dubai", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=420&fit=crop&auto=format&q=80" },
 ];
 
 const videographers = [
@@ -214,9 +223,10 @@ function PromoCarousel({ currency, onCheckout }: { currency: Currency; onCheckou
 
 // ─── Live Classes ─────────────────────────────────────────────────────────────
 
-function LiveSection({ currency, onCheckout }: { currency: Currency; onCheckout: (item: CheckoutItem) => void }) {
+function LiveSection({ currency, onCheckout, region }: { currency: Currency; onCheckout: (item: CheckoutItem) => void; region: DiscoveryRegion }) {
   const ref = useRef<HTMLDivElement>(null);
   const scroll = (d: number) => ref.current?.scrollBy({ left: d, behavior: "smooth" });
+  const rankedLives = rankByRegion(lives, region);
   return (
     <section className="mb-16 px-4 md:px-8">
       <div className="flex items-center justify-between mb-6">
@@ -226,6 +236,7 @@ function LiveSection({ currency, onCheckout }: { currency: Currency; onCheckout:
             <span className="font-mono text-[10px] tracking-[0.22em] uppercase font-bold">Live Now</span>
           </div>
           <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-bold" style={{ background: "rgba(255,45,85,0.12)", color: PINK, border: "1px solid rgba(255,45,85,0.3)" }}>{lives.length} streaming</span>
+          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono" style={{ color: "#85859B" }}><MapPin size={10} style={{ color: NEON }} />{region.shortLabel} first</span>
         </div>
         <div className="flex gap-2">
           <button onClick={() => scroll(-300)} aria-label="Previous live classes" className="w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-all" style={{ background: "#0E0E1A", border: "1px solid rgba(255,255,255,0.07)" }}><ChevronLeft size={15} /></button>
@@ -233,7 +244,7 @@ function LiveSection({ currency, onCheckout }: { currency: Currency; onCheckout:
         </div>
       </div>
       <div ref={ref} className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-        {lives.map(cls => (
+        {rankedLives.map(cls => (
           <div key={cls.id} className="group flex-none w-[280px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1" style={{ background: "#080810", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="relative h-[168px] overflow-hidden bg-[#0E0E1A]">
               <img loading="lazy" decoding="async" src={cls.image} alt={cls.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -249,7 +260,10 @@ function LiveSection({ currency, onCheckout }: { currency: Currency; onCheckout:
             <div className="p-4">
               <div className="flex gap-1.5 mb-3"><Pill text={cls.genre} color={NEON} /><Pill text={cls.level} color={NEON2} /></div>
               <h4 className="font-bold text-[15px] mb-1 leading-snug group-hover:text-accent transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>{cls.title}</h4>
-              <p className="text-xs mb-3" style={{ color: "#8A8AA4" }}>{cls.instructor}</p>
+              <div className="flex items-center justify-between gap-2 text-xs mb-3" style={{ color: "#8A8AA4" }}>
+                <span>{cls.instructor}</span>
+                <span className="flex items-center gap-1 text-[10px]"><MapPin size={10} style={{ color: NEON }} />{getDiscoveryRegion(cls.regionKey).shortLabel}</span>
+              </div>
               <div className="flex items-center gap-1.5 text-xs font-mono" style={{ color: "#8A8AA4" }}><Clock size={11} />Started {cls.ago} ago</div>
               <button onClick={() => onCheckout({ id: `live-${cls.id}`, kind: "live", title: cls.title, instructor: cls.instructor, price: currency === "INR" ? cls.priceINR : cls.priceUSD, startsAt: `Started ${cls.ago} ago`, thumbnailUrl: cls.image })} className="mt-4 min-h-10 w-full rounded-xl text-xs font-black" style={{ background: `${NEON}12`, border: `1px solid ${NEON}30`, color: NEON }}>Join live · {fmt(cls.priceINR, cls.priceUSD, currency)}</button>
             </div>
@@ -262,13 +276,13 @@ function LiveSection({ currency, onCheckout }: { currency: Currency; onCheckout:
 
 // ─── Videos Grid ─────────────────────────────────────────────────────────────
 
-function VideosSection({ currency, saved, toggleSave }: { currency: Currency; saved: Set<number>; toggleSave: (id: number) => void }) {
+function VideosSection({ currency, saved, toggleSave, region }: { currency: Currency; saved: Set<number>; toggleSave: (id: number) => void; region: DiscoveryRegion }) {
   const [filter, setFilter] = useState("All");
   const genres = ["All", "Hip-Hop", "Breaking", "Contemporary", "Classical", "Commercial", "Zumba"];
-  const filtered = filter === "All" ? vids : vids.filter(v => v.genre === filter);
+  const filtered = rankByRegion(filter === "All" ? vids : vids.filter(v => v.genre === filter), region);
   return (
     <section className="mb-24 px-4 md:px-8">
-      <SectionLabel icon={Video} text="Learn at your pace" count={`${vids.length} videos`} />
+      <SectionLabel icon={Video} text="Learn at your pace" count={`${vids.length} videos · ${region.shortLabel} first`} />
       <div className="flex gap-2 mb-8 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
         {genres.map(g => (
           <button key={g} onClick={() => setFilter(g)} className="flex-none px-4 py-2 rounded-full text-[11px] font-semibold font-mono uppercase tracking-wide transition-all duration-200"
@@ -295,7 +309,10 @@ function VideosSection({ currency, saved, toggleSave }: { currency: Currency; sa
             <div className="p-4">
               <div className="flex gap-1.5 mb-3"><Pill text={v.genre} color={NEON} /><Pill text={v.level} color={NEON2} /></div>
               <h4 className="font-bold text-[15px] mb-1 leading-snug group-hover:text-accent transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>{v.title}</h4>
-              <p className="text-xs mb-4" style={{ color: "#8A8AA4" }}>{v.instructor}</p>
+              <div className="flex items-center justify-between gap-2 text-xs mb-4" style={{ color: "#8A8AA4" }}>
+                <span>{v.instructor}</span>
+                <span className="flex items-center gap-1 text-[10px]"><MapPin size={10} style={{ color: NEON }} />{getDiscoveryRegion(v.regionKey).shortLabel}</span>
+              </div>
               <div className="flex items-center gap-4 text-xs" style={{ color: "#8A8AA4" }}>
                 <span className="flex items-center gap-1.5"><TrendingUp size={11} />{v.views}</span>
                 <span className="flex items-center gap-1.5"><Heart size={11} />{v.likes}</span>
@@ -317,12 +334,16 @@ function HomeTab({
   toggleSave,
   onNavigate,
   onCheckout,
+  region,
+  onOpenLocation,
 }: {
   currency: Currency;
   saved: Set<number>;
   toggleSave: (id: number) => void;
   onNavigate: (tab: Tab) => void;
   onCheckout: (item: CheckoutItem) => void;
+  region: DiscoveryRegion;
+  onOpenLocation: () => void;
 }) {
   const [query, setQuery] = useState("");
   const styles = ["Hip-Hop", "Bollywood", "Contemporary", "Breaking", "Classical", "Salsa", "Zumba"];
@@ -332,6 +353,7 @@ function HomeTab({
     "INR + USD supported",
     "Global teacher payouts",
   ];
+  const featuredLive = rankByRegion(lives, region)[0];
 
   return (
     <>
@@ -395,21 +417,21 @@ function HomeTab({
 
           <SpotlightCard className="rounded-[28px] overflow-hidden min-h-[510px]" color="rgba(0,255,178,0.13)" style={{ border: "1px solid rgba(255,255,255,0.09)", background: "#080810", boxShadow: "0 30px 90px rgba(0,0,0,0.46)" }}>
             <div className="relative z-[3] min-h-[510px]">
-              <img src={lives[0].image} alt="Dancer practicing in a studio" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={featuredLive.image} alt={`${featuredLive.title} dance class`} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.92) 84%)" }} />
               <div className="absolute inset-x-0 top-0 p-5 flex items-center justify-between">
                 <LiveBadge />
-                <span className="px-3 py-1.5 rounded-full text-[10px] font-mono font-bold" style={{ background: "rgba(0,0,0,0.62)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(12px)" }}>BEGINNER FRIENDLY</span>
+                <span className="px-3 py-1.5 rounded-full text-[10px] font-mono font-bold" style={{ background: "rgba(0,0,0,0.62)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(12px)" }}>POPULAR IN {getDiscoveryRegion(featuredLive.regionKey).shortLabel.toUpperCase()}</span>
               </div>
               <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-                <p className="font-mono text-[10px] tracking-[0.18em] uppercase mb-3" style={{ color: NEON }}>Happening now · Hip-Hop</p>
-                <h2 className="text-3xl md:text-4xl font-black mb-2">Breaking Basics</h2>
-                <p className="text-sm mb-5" style={{ color: "#C7C7D8" }}>with DJ Kross · Join from any device</p>
+                <p className="font-mono text-[10px] tracking-[0.18em] uppercase mb-3" style={{ color: NEON }}>Happening now · {featuredLive.genre}</p>
+                <h2 className="text-3xl md:text-4xl font-black mb-2">{featuredLive.title}</h2>
+                <p className="text-sm mb-5" style={{ color: "#C7C7D8" }}>with {featuredLive.instructor} · Join from any device</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={() => onNavigate("learn")} className="min-h-11 px-5 rounded-xl text-sm font-black flex items-center gap-2" style={{ background: NEON, color: "#000" }}>
+                  <button onClick={() => onCheckout({ id: `live-${featuredLive.id}`, kind: "live", title: featuredLive.title, instructor: featuredLive.instructor, price: currency === "INR" ? featuredLive.priceINR : featuredLive.priceUSD, startsAt: `Started ${featuredLive.ago} ago`, thumbnailUrl: featuredLive.image })} className="min-h-11 px-5 rounded-xl text-sm font-black flex items-center gap-2" style={{ background: NEON, color: "#000" }}>
                     <Play size={15} fill="#000" /> Join live
                   </button>
-                  <span className="flex items-center gap-2 text-xs" style={{ color: "#C7C7D8" }}><Users size={14} style={{ color: NEON }} />{lives[0].viewers} learning now</span>
+                  <span className="flex items-center gap-2 text-xs" style={{ color: "#C7C7D8" }}><Users size={14} style={{ color: NEON }} />{featuredLive.viewers} learning now</span>
                 </div>
               </div>
             </div>
@@ -427,7 +449,8 @@ function HomeTab({
       </section>
 
       <div className="relative pt-10 md:pt-12" style={{ zIndex: 1 }}>
-        <LiveSection currency={currency} onCheckout={onCheckout} />
+        <RegionalSpotlight region={region} videos={vids} onChangeLocation={onOpenLocation} onExplore={() => onNavigate("learn")} />
+        <LiveSection currency={currency} onCheckout={onCheckout} region={region} />
 
         <section className="px-4 md:px-8 mb-16">
           <SectionLabel icon={Music} text="Find your rhythm" count="Choose a style" color={NEON2} />
@@ -472,7 +495,7 @@ function HomeTab({
         </section>
 
         <PromoCarousel currency={currency} onCheckout={onCheckout} />
-        <VideosSection currency={currency} saved={saved} toggleSave={toggleSave} />
+        <VideosSection currency={currency} saved={saved} toggleSave={toggleSave} region={region} />
 
         <section className="px-4 md:px-8 mb-24">
           <div className="relative overflow-hidden rounded-[28px] p-7 md:p-12" style={{ background: "linear-gradient(120deg, rgba(0,255,178,0.07), rgba(108,99,255,0.1) 55%, rgba(255,45,85,0.05))", border: "1px solid rgba(255,255,255,0.09)" }}>
@@ -496,19 +519,19 @@ function HomeTab({
 }
 // ─── Learn Tab (Students) ─────────────────────────────────────────────────────
 
-function LearnTab({ currency, onCheckout }: { currency: Currency; onCheckout: (item: CheckoutItem) => void }) {
+function LearnTab({ currency, onCheckout, region, onOpenLocation }: { currency: Currency; onCheckout: (item: CheckoutItem) => void; region: DiscoveryRegion; onOpenLocation: () => void }) {
   const [activeCat, setActiveCat] = useState("All Styles");
   const cats = ["All Styles", "Hip-Hop", "Breaking", "Latin", "Contemporary", "Classical", "Vogue", "Zumba"];
   const courses = [
-    { id: 1, title: "The Complete Hip-Hop Dancer", instructor: "Kayla Johnson", lessons: 48, duration: "12 hrs", level: "All Levels", priceINR: 3999, priceUSD: 49, rating: 4.9, students: "14.8K", progress: 32, genre: "Hip-Hop", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=400&fit=crop&auto=format&q=80" },
-    { id: 2, title: "Breaking: Zero to Hero", instructor: "Urban Flex", lessons: 36, duration: "9 hrs", level: "Beginner", priceINR: 2499, priceUSD: 30, rating: 4.8, students: "8.1K", progress: 0, genre: "Breaking", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=400&fit=crop&auto=format&q=80" },
-    { id: 3, title: "Salsa & Bachata Essentials", instructor: "Maria Cruz", lessons: 28, duration: "7 hrs", level: "Beginner", priceINR: 1999, priceUSD: 24, rating: 4.7, students: "11.2K", progress: 0, genre: "Latin", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=400&fit=crop&auto=format&q=80" },
-    { id: 4, title: "Contemporary Movement Lab", instructor: "Arya Kapoor", lessons: 52, duration: "14 hrs", level: "Intermediate", priceINR: 4499, priceUSD: 55, rating: 4.9, students: "5.4K", progress: 67, genre: "Contemporary", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=400&fit=crop&auto=format&q=80" },
-    { id: 5, title: "Bharatanatyam: Classical Forms", instructor: "Divya Sharma", lessons: 60, duration: "16 hrs", level: "Beginner", priceINR: 3499, priceUSD: 42, rating: 4.8, students: "7.9K", progress: 0, genre: "Classical", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=640&h=400&fit=crop&auto=format&q=80" },
-    { id: 6, title: "Vogue & Waacking Foundations", instructor: "Princess K", lessons: 24, duration: "6 hrs", level: "All Levels", priceINR: 1499, priceUSD: 18, rating: 4.6, students: "3.8K", progress: 0, genre: "Vogue", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=400&fit=crop&auto=format&q=80" },
-    { id: 7, title: "Zumba Cardio Party", instructor: "Sofia Reyes", lessons: 30, duration: "8 hrs", level: "All Levels", priceINR: 1799, priceUSD: 22, rating: 4.9, students: "12.6K", progress: 0, genre: "Zumba", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 1, title: "The Complete Hip-Hop Dancer", instructor: "Kayla Johnson", lessons: 48, duration: "12 hrs", level: "All Levels", priceINR: 3999, priceUSD: 49, rating: 4.9, students: "14.8K", progress: 32, genre: "Hip-Hop", regionKey: "new-york", image: "https://images.unsplash.com/photo-1547153760-18fc86324498?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 2, title: "Breaking: Zero to Hero", instructor: "Urban Flex", lessons: 36, duration: "9 hrs", level: "Beginner", priceINR: 2499, priceUSD: 30, rating: 4.8, students: "8.1K", progress: 0, genre: "Breaking", regionKey: "delhi", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 3, title: "Salsa & Bachata Essentials", instructor: "Maria Cruz", lessons: 28, duration: "7 hrs", level: "Beginner", priceINR: 1999, priceUSD: 24, rating: 4.7, students: "11.2K", progress: 0, genre: "Latin", regionKey: "singapore", image: "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 4, title: "Contemporary Movement Lab", instructor: "Arya Kapoor", lessons: 52, duration: "14 hrs", level: "Intermediate", priceINR: 4499, priceUSD: 55, rating: 4.9, students: "5.4K", progress: 67, genre: "Contemporary", regionKey: "bengaluru", image: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 5, title: "Bharatanatyam: Classical Forms", instructor: "Divya Sharma", lessons: 60, duration: "16 hrs", level: "Beginner", priceINR: 3499, priceUSD: 42, rating: 4.8, students: "7.9K", progress: 0, genre: "Classical", regionKey: "bhubaneswar", image: "https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 6, title: "Vogue & Waacking Foundations", instructor: "Princess K", lessons: 24, duration: "6 hrs", level: "All Levels", priceINR: 1499, priceUSD: 18, rating: 4.6, students: "3.8K", progress: 0, genre: "Vogue", regionKey: "london", image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?w=640&h=400&fit=crop&auto=format&q=80" },
+    { id: 7, title: "Zumba Cardio Party", instructor: "Sofia Reyes", lessons: 30, duration: "8 hrs", level: "All Levels", priceINR: 1799, priceUSD: 22, rating: 4.9, students: "12.6K", progress: 0, genre: "Zumba", regionKey: "dubai", image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=640&h=400&fit=crop&auto=format&q=80" },
   ];
-  const filtered = activeCat === "All Styles" ? courses : courses.filter(c => c.genre === activeCat);
+  const filtered = rankByRegion(activeCat === "All Styles" ? courses : courses.filter(c => c.genre === activeCat), region);
   const enrolled = courses.filter(c => c.progress > 0);
 
   return (
@@ -523,6 +546,9 @@ function LearnTab({ currency, onCheckout }: { currency: Currency; onCheckout: (i
           Learn from the<br /><span style={{ background: `linear-gradient(90deg, ${NEON2}, ${NEON})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Best in the World.</span>
         </h1>
         <p className="text-[15px]" style={{ color: "#8A8AA4" }}>800+ courses taught by world-class dance artists. Learn at your pace.</p>
+        <button onClick={onOpenLocation} className="mt-4 min-h-10 px-3.5 rounded-xl inline-flex items-center gap-2 text-xs font-bold transition-all hover:-translate-y-0.5" style={{ background: `${NEON}0C`, border: `1px solid ${NEON}24`, color: "#C7C7D8" }}>
+          <MapPin size={13} style={{ color: NEON }} /> Recommendations for {region.shortLabel} <span style={{ color: NEON }}>· Change</span>
+        </button>
       </div>
 
       {/* Continue Learning strip */}
@@ -579,7 +605,10 @@ function LearnTab({ currency, onCheckout }: { currency: Currency; onCheckout: (i
             <div className="p-4">
               <div className="flex gap-1.5 mb-2"><Pill text={c.genre} color={NEON} /></div>
               <h4 className="font-bold text-[15px] mb-1 leading-snug group-hover:text-[#6C63FF] transition-colors" style={{ fontFamily: "Outfit, sans-serif" }}>{c.title}</h4>
-              <p className="text-xs mb-3" style={{ color: "#8A8AA4" }}>{c.instructor}</p>
+              <div className="flex items-center justify-between gap-2 text-xs mb-3" style={{ color: "#8A8AA4" }}>
+                <span>{c.instructor}</span>
+                <span className="flex items-center gap-1 text-[10px]"><MapPin size={10} style={{ color: NEON }} />{getDiscoveryRegion(c.regionKey).shortLabel}</span>
+              </div>
               <div className="flex items-center gap-3 mb-4 text-xs" style={{ color: "#8A8AA4" }}>
                 <span className="flex items-center gap-1"><BookOpen size={11} />{c.lessons} lessons</span>
                 <span className="flex items-center gap-1"><Clock size={11} />{c.duration}</span>
@@ -1127,7 +1156,9 @@ const NAV: { id: Tab; label: string; icon: any; color: string }[] = [
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("home");
-  const [currency, setCurrency] = useState<Currency>("INR");
+  const [regionKey, setRegionKey] = useState(readStoredDiscoveryRegionKey);
+  const [currency, setCurrency] = useState<Currency>(() => getDiscoveryRegion(regionKey).countryCode === "IN" ? "INR" : "USD");
+  const [locationOpen, setLocationOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [saved, setSaved] = useState(new Set([2, 5]));
   const [authView, setAuthView] = useState<AuthMode | null>(null);
@@ -1135,9 +1166,19 @@ export default function App() {
   const [checkoutItem, setCheckoutItem] = useState<CheckoutItem | null>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus>("idle");
 
+  const region = getDiscoveryRegion(regionKey);
   const toggleSave = useCallback((id: number) => setSaved(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }), []);
   const openCheckout = useCallback((item: CheckoutItem) => { setCheckoutItem(item); setCheckoutStatus("idle"); }, []);
   const closeCheckout = useCallback(() => { setCheckoutItem(null); setCheckoutStatus("idle"); }, []);
+  const openLocationPicker = useCallback(() => setLocationOpen(true), []);
+  const closeLocationPicker = useCallback(() => setLocationOpen(false), []);
+  const selectRegion = useCallback((nextRegion: DiscoveryRegion) => {
+    setRegionKey(nextRegion.key);
+    try { window.localStorage.setItem(DISCOVERY_STORAGE_KEY, nextRegion.key); } catch { /* The feed still updates for this session. */ }
+    if (nextRegion.countryCode === "IN") setCurrency("INR");
+    else if (nextRegion.countryCode !== "GLOBAL") setCurrency("USD");
+    setLocationOpen(false);
+  }, []);
 
   if (authView) {
     return <AuthPage initialMode={authView} onBack={() => setAuthView(null)} onAuthenticated={(role, mode) => { setAuthView(null); if (mode === "signup") { setAccountRole(role); setTab(role === "teacher" ? "earn" : "learn"); } }} />;
@@ -1162,7 +1203,7 @@ export default function App() {
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#0A0A12", border: `1px solid ${NEON}35`, boxShadow: `0 0 20px ${NEON}25` }}>
             <Equalizer size={14} />
           </div>
-          <span className="text-lg font-black tracking-[0.05em]" style={{ fontFamily: "Outfit, sans-serif", background: `linear-gradient(90deg, ${NEON}, ${NEON2})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <span className="hidden sm:inline text-lg font-black tracking-[0.05em]" style={{ fontFamily: "Outfit, sans-serif", background: `linear-gradient(90deg, ${NEON}, ${NEON2})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             GROOVLY
           </span>
         </button>
@@ -1181,6 +1222,13 @@ export default function App() {
         </nav>
 
         <div className="flex-1" />
+
+        {/* Regional discovery */}
+        <button onClick={openLocationPicker} aria-label={`Change location from ${region.label}`}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[11px] font-mono font-bold transition-all hover:scale-105"
+          style={{ background: `${NEON2}0D`, border: `1px solid ${NEON2}25`, color: "#B7B2FF" }}>
+          <MapPin size={12} /><span className="hidden xl:inline max-w-24 truncate">{region.shortLabel}</span>
+        </button>
 
         {/* Currency toggle */}
         <button onClick={() => setCurrency(c => c === "INR" ? "USD" : "INR")} aria-label={"Switch currency from " + currency}
@@ -1210,8 +1258,8 @@ export default function App() {
       {/* ── Active tab ── */}
       <main className="relative max-w-[1400px] mx-auto" style={{ zIndex: 1 }}>
         <div key={tab} className="tab-enter">
-          {tab === "home" && <HomeTab currency={currency} saved={saved} toggleSave={toggleSave} onNavigate={setTab} onCheckout={openCheckout} />}
-          {tab === "learn" && <LearnTab currency={currency} onCheckout={openCheckout} />}
+          {tab === "home" && <HomeTab currency={currency} saved={saved} toggleSave={toggleSave} onNavigate={setTab} onCheckout={openCheckout} region={region} onOpenLocation={openLocationPicker} />}
+          {tab === "learn" && <LearnTab currency={currency} onCheckout={openCheckout} region={region} onOpenLocation={openLocationPicker} />}
           {tab === "earn" && <EarnTab currency={currency} onOpenAccount={() => setAuthView("signup")} />}
           {tab === "book" && <BookTab currency={currency} />}
         </div>
@@ -1228,9 +1276,10 @@ export default function App() {
         ))}
       </nav>
 
-      {/* Chat */}
+      {/* Location, chat and checkout overlays */}
+      <LocationPicker open={locationOpen} selected={region} onClose={closeLocationPicker} onSelect={selectRegion} />
       {chatOpen && <ChatWidget onClose={() => setChatOpen(false)} />}
-      <CheckoutPreview open={Boolean(checkoutItem)} item={checkoutItem} currency={currency} countryCode={currency === "INR" ? "IN" : "US"} status={checkoutStatus} paymentReference="GRV-DEMO-7J4K92" providerName="the connected payment provider" onClose={closeCheckout} onContinue={() => setCheckoutStatus("pending")} onCheckStatus={async () => { await new Promise<void>(resolve => window.setTimeout(resolve, 450)); setCheckoutStatus("paid"); }} />
+      <CheckoutPreview open={Boolean(checkoutItem)} item={checkoutItem} currency={currency} countryCode={region.countryCode === "GLOBAL" ? (currency === "INR" ? "IN" : "US") : region.countryCode} status={checkoutStatus} paymentReference="GRV-DEMO-7J4K92" providerName="the connected payment provider" onClose={closeCheckout} onContinue={() => setCheckoutStatus("pending")} onCheckStatus={async () => { await new Promise<void>(resolve => window.setTimeout(resolve, 450)); setCheckoutStatus("paid"); }} />
     </div>
   );
 }
