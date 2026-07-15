@@ -19,7 +19,7 @@ import {
   Crown, Lock, Camera, Upload, DollarSign, CheckCircle, MapPin,
   Award, Briefcase, RotateCcw, FlipHorizontal, Mic, StopCircle,
   Eye, GraduationCap, IndianRupee, TrendingDown, BarChart2,
-  FileVideo, Plus, Check, Image, Film,
+  FileVideo, Plus, Check, Image, Film, Mail,
 } from "lucide-react";
 
 type Currency = "INR" | "USD";
@@ -30,6 +30,7 @@ const NEON = "#00FFB2";
 const NEON2 = "#6C63FF";
 const PINK = "#FF2D55";
 const GOLD = "#FFB800";
+const SUPPORT_EMAIL = "support@groovly.co.in";
 
 // ─── Shared Data ─────────────────────────────────────────────────────────────
 
@@ -1125,6 +1126,18 @@ function ChatWidget({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
+      <div className="px-4 pb-3">
+        <a
+          href={`mailto:${SUPPORT_EMAIL}?subject=Groovly%20support%20request`}
+          className="min-h-10 w-full rounded-xl px-3 flex items-center gap-2.5 text-[11px] font-bold transition-all hover:-translate-y-0.5"
+          style={{ background: `${NEON}0A`, border: `1px solid ${NEON}20`, color: "#D7D7E5" }}
+        >
+          <Mail size={14} style={{ color: NEON }} />
+          <span>Human support</span>
+          <span className="ml-auto font-mono text-[9px]" style={{ color: "#8A8AA4" }}>{SUPPORT_EMAIL}</span>
+        </a>
+      </div>
+
       {/* Input */}
       <div className="px-4 py-3.5 flex gap-2.5" style={{ borderTop: "1px solid rgba(0,255,178,0.08)" }}>
         <input
@@ -1268,6 +1281,28 @@ export default function App() {
           {tab === "book" && <BookTab currency={currency} />}
         </div>
       </main>
+
+      <footer className="relative z-[1] px-4 md:px-8 pb-10" aria-label="Groovly support">
+        <div className="max-w-[1400px] mx-auto rounded-2xl px-5 py-5 md:px-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between"
+          style={{ background: "linear-gradient(110deg, rgba(0,255,178,0.055), rgba(108,99,255,0.06))", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center gap-3.5">
+            <div className="h-11 w-11 rounded-xl flex items-center justify-center flex-none" style={{ background: `${NEON}12`, border: `1px solid ${NEON}28`, color: NEON }}>
+              <Mail size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-black" style={{ fontFamily: "Outfit, sans-serif" }}>Need help from a human?</p>
+              <p className="mt-1 text-xs" style={{ color: "#8A8AA4" }}>Account, class and payment support from the Groovly team.</p>
+            </div>
+          </div>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}?subject=Groovly%20support%20request`}
+            className="min-h-11 rounded-xl px-4 flex items-center justify-center gap-2 text-xs font-black transition-all hover:-translate-y-0.5"
+            style={{ background: NEON, color: "#000", boxShadow: `0 0 24px ${NEON}1F` }}
+          >
+            <Mail size={14} /> {SUPPORT_EMAIL}
+          </a>
+        </div>
+      </footer>
 
       {/* ── Mobile bottom nav ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch"
