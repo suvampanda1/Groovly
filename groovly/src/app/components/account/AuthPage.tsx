@@ -13,6 +13,7 @@ const GOLD = "#FFB800";
 const PANEL = "#080810";
 const INPUT = "#0E0E1A";
 const MUTED = "#A5A5BA";
+const SUPPORT_EMAIL = "support@groovly.co.in";
 const inputClass = "min-h-12 w-full rounded-xl px-4 text-sm outline-none transition-colors placeholder:text-[#646478]";
 
 function GoogleMark() {
@@ -152,6 +153,11 @@ export function AuthPage({ initialMode, onBack, onAuthenticated }: {
               <div className="mt-5 rounded-xl p-3.5 flex gap-3" style={{ background: "rgba(108,99,255,0.07)", border: "1px solid rgba(108,99,255,0.18)" }}><ShieldCheck size={16} className="mt-0.5 flex-none" style={{ color: "#AAA5FF" }} /><p className="text-[11px] leading-relaxed" style={{ color: "#A8A8BC" }}><strong style={{ color: "#D3D1FF" }}>UI preview:</strong> no password or account data entered here is stored. Production login requires an identity provider, secure sessions, MFA, and rate limiting.</p></div>
             </form>
           )}
+          <a
+            href={`mailto:${SUPPORT_EMAIL}?subject=Groovly%20account%20support`}
+            className="mt-5 min-h-11 flex items-center justify-center gap-2 text-xs font-bold transition-colors hover:text-white"
+            style={{ color: "#8A8AA4" }}
+          ><Mail size={14} /> Need account help? {SUPPORT_EMAIL}</a>
         </div>
       </section>
     </main>
